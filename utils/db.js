@@ -39,7 +39,7 @@ class DBClient {
     await this.client.connect();
     const db = this.client.db(this.database);
     const usersCollection = db.collection('users');
-    const user = await usersCollection.findOne({ email })
+    const user = await usersCollection.findOne({ email });
     return user;
   }
 
