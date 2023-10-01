@@ -1,5 +1,5 @@
-import { MongoClient } from 'mongodb';
-import sha1 from 'sha1';
+import { MongoClient, ObjectId } from 'mongodb';
+import { hashStr } from './helper-functions';
 
 class DBClient {
   constructor() {
@@ -35,16 +35,29 @@ class DBClient {
     return noOfFiles;
   }
 
-  async findUser(email) {
+  async findUser(email, password) {
     await this.client.connect();
     const db = this.client.db(this.database);
     const usersCollection = db.collection('users');
+    if (password) {
+      const hashedPassword = hashStr(password);
+      const user = await usersCollection.findOne({ email, password: hashedPassword });
+      return user;
+    }
     const user = await usersCollection.findOne({ email });
     return user;
   }
 
+  async findUserByID(id) {
+    await this.client.connect();
+    const db = this.client.db(this.database);
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne({ _id: ObjectId(id) });
+    return user;
+  }
+
   async createNewUser(email, password) {
-    const hashedPassword = sha1(password);
+    const hashedPassword = hashStr(password);
     await this.client.connect();
     const db = this.client.db(this.database);
     const usersCollection = db.collection('users');
