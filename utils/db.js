@@ -7,11 +7,16 @@ class DBClient {
     const port = process.env.DB_PORT || 27017;
     this.database = process.env.DB_DATABASE || 'files_manager';
     const uri = `mongodb://${host}:${port}`;
-    this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    this.client = new MongoClient(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     this.connected = false;
-    this.client.connect().then(() => {
-      this.connected = true;
-    })
+    this.client
+      .connect()
+      .then(() => {
+        this.connected = true;
+      })
       .catch((err) => console.log(err));
   }
 
@@ -41,7 +46,10 @@ class DBClient {
     const usersCollection = db.collection('users');
     if (password) {
       const hashedPassword = hashStr(password);
-      const user = await usersCollection.findOne({ email, password: hashedPassword });
+      const user = await usersCollection.findOne({
+        email,
+        password: hashedPassword,
+      });
       return user;
     }
     const user = await usersCollection.findOne({ email });
@@ -69,11 +77,21 @@ class DBClient {
     await this.client.connect();
     const db = this.client.db(this.database);
     const usersCollection = db.collection('users');
-    const { ops } = await usersCollection.insertOne({ email, password: hashedPassword });
+    const { ops } = await usersCollection.insertOne({
+      email,
+      password: hashedPassword,
+    });
     return ops[0];
   }
 
-  async addNewFile(userId, name, type, isPublic = false, parentId = 0, localPath) {
+  async addNewFile(
+    userId,
+    name,
+    type,
+    isPublic = false,
+    parentId = 0,
+    localPath,
+  ) {
     this.client.connect();
     const db = this.client.db(this.database);
     const filesCollection = db.collection('files');
@@ -96,6 +114,14 @@ class DBClient {
       localPath,
     });
     return ops[0];
+  }
+
+  async aggregateFiles(pipeline) {
+    await this.client.connect();
+    const db = this.client.db(this.database);
+    const filesCollection = db.collection('files');
+    const result = await filesCollection.aggregate(pipeline).toArray();
+    return result;
   }
 }
 
