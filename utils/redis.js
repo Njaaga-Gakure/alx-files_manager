@@ -48,6 +48,12 @@ class RedisClient {
       console.log(err);
     }
   }
+
+  async getIdFromToken(token) {
+    const key = `auth_${token}`;
+    const id = await this.get(key);
+    return id;
+  }
 }
 
 const redisClient = new RedisClient();
