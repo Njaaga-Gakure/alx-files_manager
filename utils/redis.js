@@ -9,9 +9,9 @@ class RedisClient {
       console.log('Redis client connected to the server');
       this.connected = true;
     })
-    .on('error', (err) => {
-      console.log(`Redis client not connected to the server: ${err}`);
-    })
+      .on('error', (err) => {
+        console.log(`Redis client not connected to the server: ${err}`);
+      });
   }
 
   isAlive() {
@@ -47,6 +47,12 @@ class RedisClient {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  async getIdFromToken(token) {
+    const key = `auth_${token}`;
+    const id = await this.get(key);
+    return id;
   }
 }
 
