@@ -56,12 +56,45 @@ class DBClient {
     return user;
   }
 
+  async findFileByparentId(parentId) {
+    await this.client.connect();
+    const db = this.client.db(this.database);
+    const filesCollection = db.collection('files');
+    const file = await filesCollection.findOne({ parentId });
+    return file;
+  }
+
   async createNewUser(email, password) {
     const hashedPassword = hashStr(password);
     await this.client.connect();
     const db = this.client.db(this.database);
     const usersCollection = db.collection('users');
     const { ops } = await usersCollection.insertOne({ email, password: hashedPassword });
+    return ops[0];
+  }
+
+  async addNewFile(userId, name, type, isPublic = false, parentId = 0, localPath) {
+    this.client.connect();
+    const db = this.client.db(this.database);
+    const filesCollection = db.collection('files');
+    if (type === 'folder') {
+      const { ops } = await filesCollection.insertOne({
+        userId,
+        name,
+        type,
+        isPublic,
+        parentId,
+      });
+      return ops[0];
+    }
+    const { ops } = await filesCollection.insertOne({
+      userId,
+      name,
+      type,
+      isPublic,
+      parentId,
+      localPath,
+    });
     return ops[0];
   }
 }
