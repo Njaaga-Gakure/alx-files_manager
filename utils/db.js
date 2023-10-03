@@ -72,6 +72,14 @@ class DBClient {
     return file;
   }
 
+  async findFileByID(id) {
+    await this.client.connect();
+    const db = this.client.db(this.database);
+    const filesCollection = db.collection('files');
+    const file = await filesCollection.findOne({ _id: ObjectId(id) });
+    return file;
+  }
+
   async createNewUser(email, password) {
     const hashedPassword = hashStr(password);
     await this.client.connect();
