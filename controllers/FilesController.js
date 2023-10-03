@@ -48,6 +48,7 @@ class FilesController {
   }
 
   static async getShow(req, res) {
+    const { id } = req.params;
     const token = req.headers["x-token"];
     const userId = await redisClient.getIdFromToken(token);
     const user = await dbClient.findUserByID(userId)
