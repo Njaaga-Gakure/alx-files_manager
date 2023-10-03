@@ -50,10 +50,11 @@ class FilesController {
     const { id } = req.params;
     const token = req.headers['x-token'];
     const userId = await redisClient.getIdFromToken(token);
-    if (!userId) {
+    const user = await dbClient.findUserByID(userId)
+    if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const file = await dbClient.findFileByparentId(id);
+    const file = await dbClient.findFileByID(id);
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
     }
