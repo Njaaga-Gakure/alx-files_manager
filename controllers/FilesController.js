@@ -51,15 +51,22 @@ class FilesController {
     const { id } = req.params;
     const token = req.headers["x-token"];
     const userId = await redisClient.getIdFromToken(token);
-    const user = await dbClient.findUserByID(userId)
+    const user = await dbClient.findUserByID(userId);
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
     const file = await dbClient.findFileByID(id);
     if (!file) {
       return res.status(404).json({ error: "Not found" });
     }
-    return res.status(200).json(file);
+    return res.status(200).json({
+      id: file._id,
+      userId: file.userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
   }
 
   static async getIndex(req, res) {
@@ -78,7 +85,19 @@ class FilesController {
       { $limit: itemsPerPage },
     ];
     // Get the list of file documents
-    const files = await dbClient.aggregateFiles(aggregationPipeline);
+    const filePages = await dbClient.aggregateFiles(aggregationPipeline);
+    const files = [];
+    await filePages.forEach((file) => {
+      const fileObj = {
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      };
+      files.push(fileObj);
+    });
     return res.status(200).json(files);
   }
 }
