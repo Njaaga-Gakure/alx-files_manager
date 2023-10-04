@@ -104,6 +104,22 @@ class DBClient {
     return file;
   }
 
+  async updateIsPublic(userId, fileId, isPublic) {
+    await this.client.connect();
+    const db = this.client.db(this.database);
+    const filesCollection = db.collection('files');
+    const filter = { _id: ObjectId(fileId), userId: ObjectId(userId) };
+    const update = { $set: { isPublic } };
+    await filesCollection.updateOne(filter, update);
+    const file = await filesCollection.findOne(filter);
+    if (!file) return null;
+    const { _id } = file;
+    const tmpFile = { id: _id, ...file };
+    delete tmpFile._id;
+    delete tmpFile.localPath;
+    return tmpFile;
+  }
+
   async createNewUser(email, password) {
     const hashedPassword = hashStr(password);
     await this.client.connect();
