@@ -1,3 +1,6 @@
+/* eslint-disable consistent-return */
+import { lookup } from 'mime-types';
+import { existsSync, createReadStream } from 'fs';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 import { saveToDisk } from '../utils/helper-functions';
@@ -119,6 +122,28 @@ class FilesController {
     const file = await dbClient.updateIsPublic(userId, fileId, false);
     if (!file) return res.status(404).json({ error: 'Not found' });
     return res.status(200).json(file);
+  }
+
+  static async getFile(req, res) {
+    const token = req.headers['x-token'];
+    const { id: fileId } = req.params;
+    const userId = await redisClient.getIdFromToken(token);
+    const user = await dbClient.findUserByID(userId);
+    const file = await dbClient.findFileByID(fileId);
+    if (!file) return res.status(404).json({ error: 'Not found' });
+    const {
+      isPublic,
+      type,
+      localPath,
+      name,
+    } = file;
+    if (!isPublic && !user) return res.status(404).json({ error: 'Not found' });
+    if (type === 'folder') return res.status(400).json({ error: "A folder doesn't have content" });
+    if (!existsSync(localPath)) return res.status(404).json({ error: 'Not found' });
+    const mimeType = lookup(name);
+    res.setHeader('Content-Type', mimeType);
+    const fileStream = createReadStream(localPath);
+    fileStream.pipe(res);
   }
 }
 
