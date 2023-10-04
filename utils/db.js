@@ -72,6 +72,30 @@ class DBClient {
     return file;
   }
 
+  async findManyFilesByparentId(page, parentId) {
+    await this.client.connect();
+    const pageSize = 20;
+    const skip = page * pageSize;
+    const pipeline = [
+      {
+        $match: {
+          parentId,
+        },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: pageSize,
+      },
+    ];
+    const db = this.client.db(this.database);
+    const filesCollection = db.collection('files');
+    const cursor = await filesCollection.aggregate(pipeline);
+    const files = cursor.toArray();
+    return files;
+  }
+
   async findFileByID(id) {
     await this.client.connect();
     const db = this.client.db(this.database);
@@ -122,14 +146,6 @@ class DBClient {
       localPath,
     });
     return ops[0];
-  }
-
-  async aggregateFiles(pipeline) {
-    await this.client.connect();
-    const db = this.client.db(this.database);
-    const filesCollection = db.collection('files');
-    const result = await filesCollection.aggregate(pipeline).toArray();
-    return result;
   }
 }
 

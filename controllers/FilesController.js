@@ -70,32 +70,31 @@ class FilesController {
 
   static async getIndex(req, res) {
     const token = req.headers['x-token'];
+    console.log(token);
     const userId = await redisClient.getIdFromToken(token);
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    const user = await dbClient.findUserByID(userId);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     const { parentId, page } = req.query;
-    const parsedPage = parseInt(page, 10) || 0;
-    const itemsPerPage = 20;
-    // aggregation pipeline for pagination
-    const aggregationPipeline = [
-      { $match: { userId, parentId: parentId || 0 } },
-      { $skip: parsedPage * itemsPerPage },
-      { $limit: itemsPerPage },
-    ];
-    // Get the list of file documents
-    const filePages = await dbClient.aggregateFiles(aggregationPipeline);
-    const files = [];
-    await filePages.forEach((file) => {
-      const fileObj = {
-        id: file._id,
-        userId: file.userId,
-        name: file.name,
-        type: file.type,
-        isPublic: file.isPublic,
-        parentId: file.parentId,
+    const pg = page || 0;
+    const pId = parentId || 0;
+    let files = await dbClient.findManyFilesByparentId(Number(pg), Number(pId));
+    files = files.map((file) => {
+      const {
+        _id,
+        userId,
+        name,
+        type,
+        isPublic,
+        parentId,
+      } = file;
+      return {
+        id: _id,
+        userId,
+        name,
+        type,
+        isPublic,
+        parentId,
       };
-      files.push(fileObj);
     });
     return res.status(200).json(files);
   }
